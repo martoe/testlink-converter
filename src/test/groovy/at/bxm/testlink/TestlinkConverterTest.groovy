@@ -11,7 +11,7 @@ class TestlinkConverterTest {
   void "convert simple file"() {
     def converted = new TestlinkConverter().convert("src/test/resources/simple-testcase.xlsx" as File)
     assertThat(converted, equalTo("""<testcases>
-  <testcase internalid='0' name='F-001'>
+  <testcase internalid='0' name='T-001'>
     <node_order>1000</node_order>
     <version>1</version>
     <summary>Test Case Summary</summary>
@@ -25,17 +25,19 @@ class TestlinkConverterTest {
     <steps>
       <step>
         <step_number>1</step_number>
-        <actions>1. Do first</actions>
+        <actions>OL Login &lt;br/&gt; Do first</actions>
+        <expectedresults></expectedresults>
         <execution_type>1</execution_type>
       </step>
       <step>
         <step_number>2</step_number>
-        <actions>2. Do next</actions>
+        <actions>Menü Suche &lt;br/&gt; Do next</actions>
+        <expectedresults></expectedresults>
         <execution_type>1</execution_type>
       </step>
       <step>
         <step_number>3</step_number>
-        <actions>3. Do last</actions>
+        <actions>Postkorbeintrag auswählen &lt;br/&gt; Do last</actions>
         <expectedresults>Expected result</expectedresults>
         <execution_type>1</execution_type>
       </step>
@@ -46,7 +48,7 @@ class TestlinkConverterTest {
 
   @Test
   void "convert real data"() {
-    def file = "Regressionsliste_FICO_Kommentare Christoph_überarbeitet"
+    def file = "Regressionsliste_neu_Template"
     new File("target/${file}.xml").text = new TestlinkConverter().convert(new File("src/test/resources/${file}.xlsx"))
   }
 }
