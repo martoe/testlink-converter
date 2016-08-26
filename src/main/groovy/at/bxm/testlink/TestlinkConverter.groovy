@@ -24,7 +24,15 @@ class TestlinkConverter {
   def idCounter
   def xml
 
-  String convert(File excelFile) {
+  String asTestcases(File excelFile) {
+    return parse(excelFile, false)
+  }
+
+  String asTestsuite(File excelFile) {
+    return parse(excelFile, true)
+  }
+
+  private String parse(File excelFile, boolean asTestsuite) {
     idCounter = 0
     def xmlWriter = new StringWriter()
     xml = new MarkupBuilder(xmlWriter)
@@ -35,18 +43,22 @@ class TestlinkConverter {
     if (wb.numberOfSheets > 1 && wb.activeSheetIndex != 0) {
       throw new InvalidFormatException("File contains multiple sheets - which one to use?")
     }
-    processSheet(wb.getSheetAt(0))
+    if (asTestsuite) {
+      readTestsuite(wb.getSheetAt(0))
+    } else {
+      readTestcases(wb.getSheetAt(0))
+    }
     return xmlWriter.toString()
   }
 
-  private void processSheet(Sheet sheet) {
+  private void readTestcases(Sheet sheet) {
     xml.testcases {
       def testCaseRows = []
       sheet.rowIterator().each { row ->
         String testId = row.getCell(0)
         if (testId != "TF_ID") { // skip header line
           if (testId) { // start of a new testcase block
-            processTestcase(testCaseRows)
+            readTestcase(testCaseRows)
             testCaseRows.clear()
           }
           String testGoal = row.getCell(1)
@@ -54,15 +66,40 @@ class TestlinkConverter {
           if (testGoal || testAction) {
             testCaseRows.add(row)
           } else {
-            println("Skipping empty row " + (row.rowNum + 1))
+            log.info("Skipping empty row " + (row.rowNum + 1))
           }
         }
       }
-      processTestcase(testCaseRows)
+      readTestcase(testCaseRows)
     }
   }
 
-  private void processTestcase(List<Row> rows) {
+  private void readTestsuite(Sheet sheet) {
+    xml.testsuite(id: 1, name: sheet.sheetName) {
+      node_order(1)
+      details(sheet.sheetName)
+      def testCaseRows = []
+      sheet.rowIterator().each { row ->
+        String testId = row.getCell(0)
+        if (testId != "TF_ID") { // skip header line
+          if (testId) { // start of a new testcase block
+            readTestcase(testCaseRows)
+            testCaseRows.clear()
+          }
+          String testGoal = row.getCell(1)
+          String testAction = row.getCell(4)
+          if (testGoal || testAction) {
+            testCaseRows.add(row)
+          } else {
+            log.info("Skipping empty row " + (row.rowNum + 1))
+          }
+        }
+      }
+      readTestcase(testCaseRows)
+    }
+  }
+
+  private void readTestcase(List<Row> rows) {
     if (rows) {
       String testId = rows[0].getCell(0)
       String testGoal = rows[0].getCell(1)
