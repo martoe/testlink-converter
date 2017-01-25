@@ -98,4 +98,13 @@ class TestlinkConverterTest {
     def file = "Regressionsliste_neu_Template"
     new File("target/$file-suite.xml").text = new TestlinkConverter().asTestsuite(new File("src/test/resources/${file}.xlsx"))
   }
+
+  @Test
+  void "convert real data to multiple testcase files"() {
+    def file = "Regressionsliste_neu_Template"
+    def data = new TestlinkConverter().allSheetsAsTestcases(new File("src/test/resources/${file}.xlsx"))
+    data.each { name, xml ->
+      new File("target/$file-${name}.xml").text = xml
+    }
+  }
 }

@@ -32,10 +32,16 @@ class TestlinkConverter {
     return parse(excelFile, true)
   }
 
+  Map<String, String> allSheetsAsTestcases(File excelFile) {
+    def wb = WorkbookFactory.create(excelFile)
+    Map<String, String> result = [:]
+    wb.sheetIterator().each {
+      result[it.sheetName] = parse(it, false)
+    }
+    return result
+  }
+
   private String parse(File excelFile, boolean asTestsuite) {
-    idCounter = 0
-    def xmlWriter = new StringWriter()
-    xml = new MarkupBuilder(xmlWriter)
     if (!excelFile.exists() || !excelFile.canRead() || !excelFile.file) {
       throw new FileNotFoundException("Cannot read local file $excelFile.absolutePath")
     }
@@ -43,10 +49,17 @@ class TestlinkConverter {
     if (wb.numberOfSheets > 1 && wb.activeSheetIndex != 0) {
       throw new InvalidFormatException("File contains multiple sheets - which one to use?")
     }
+    return parse(wb.getSheetAt(0), asTestsuite)
+  }
+
+  private String parse(Sheet sheet, boolean asTestsuite) {
+    idCounter = 0
+    def xmlWriter = new StringWriter()
+    xml = new MarkupBuilder(xmlWriter)
     if (asTestsuite) {
-      readTestsuite(wb.getSheetAt(0))
+      readTestsuite(sheet)
     } else {
-      readTestcases(wb.getSheetAt(0))
+      readTestcases(sheet)
     }
     return xmlWriter.toString()
   }
