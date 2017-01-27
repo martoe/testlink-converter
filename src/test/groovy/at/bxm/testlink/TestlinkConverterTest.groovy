@@ -104,6 +104,7 @@ class TestlinkConverterTest {
     def file = "Regressionsliste_neu_Template"
     def data = new TestlinkConverter().allSheetsAsTestcases(new File("src/test/resources/${file}.xlsx"))
     data.each { name, xml ->
+      //TestlinkConverter.validate(xml)
       new File("target/$file-${name}.xml").text = xml
     }
   }

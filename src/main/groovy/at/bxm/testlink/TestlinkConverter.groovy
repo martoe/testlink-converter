@@ -21,7 +21,8 @@ import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI
 @Slf4j
 class TestlinkConverter {
 
-  def idCounter
+  /** use the last 9 digits of the timestamp as starting value for "unique" ids (allowed range: 0-4294967295) */
+  private static idCounter = ((System.currentTimeMillis() as String)[-9..-1]) as long
   def xml
 
   String asTestcases(File excelFile) {
@@ -53,7 +54,6 @@ class TestlinkConverter {
   }
 
   private String parse(Sheet sheet, boolean asTestsuite) {
-    idCounter = 0
     def xmlWriter = new StringWriter()
     xml = new MarkupBuilder(xmlWriter)
     if (asTestsuite) {
@@ -114,34 +114,37 @@ class TestlinkConverter {
 
   private void readTestcase(List<Row> rows) {
     if (rows) {
-      String testId = rows[0].getCell(0)
+      //String testId = rows[0].getCell(0)
       String testGoal = rows[0].getCell(1)
       String testPrecond = rows[0].getCell(2)
       // ...
-      xml.testcase(internalid: idCounter++, name: testId) {
+      xml.testcase(internalid: idCounter++, name: testGoal) {
         node_order(1000)
+        //externalid(testId.find( /\d+/ ))
         version(1)
-        summary(testGoal)
+        //summary()
         preconditions(testPrecond)
         execution_type(1)
         importance(2)
-        estimated_exec_duration {}
-        status(1)
-        is_open(1)
-        active(1)
         steps {
           rows.eachWithIndex { row, testStepNo ->
             String testStepAction = row.getCell(4)
             String testStepDesc = row.getCell(5)
             String testStepResult = row.getCell(6)
-            step {
-              step_number(testStepNo + 1)
-              actions("$testStepAction <br/> $testStepDesc")
-              expectedresults(testStepResult)
-              execution_type(1)
+            if (testStepAction || testStepDesc || testStepResult) {
+              step {
+                step_number(testStepNo + 1)
+                actions("$testStepAction <br/> $testStepDesc")
+                expectedresults(testStepResult)
+                execution_type(1)
+              }
             }
           }
         }
+        estimated_exec_duration {}
+        status(1)
+        is_open(1)
+        active(1)
       }
     }
   }
